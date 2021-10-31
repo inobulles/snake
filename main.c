@@ -5,6 +5,8 @@
 
 #include "img/bg.h"
 #include "img/apple.h"
+#include "img/head_up.h"
+#include "img/body.h"
 
 // macros and typedefs
 
@@ -26,11 +28,22 @@ typedef struct {
 	tile_type_t type;
 } tile_t;
 
+typedef enum {
+	UP,
+	RIGHT,
+	DOWN,
+	LEFT,
+} direction_t;
+
 typedef struct {
 	unsigned running;
 
 	unsigned tiles_x, tiles_y;
 	tile_t* map;
+
+	direction_t direction;
+	unsigned head_x, head_y;
+	unsigned tail_x, tail_y;
 
 	unsigned width, height;
 	uint8_t* framebuffer;
@@ -76,15 +89,21 @@ static void render_image(game_t* game, unsigned img_width, unsigned img_height, 
 	}
 }
 
-#define RENDER_IMAGE(img) render_image(game, (img).width, (img).height, (img).pixel_data, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+#define RENDER_IMAGE(img, x, y) render_image(game, (img).width, (img).height, (img).pixel_data, (x) * TILE_SIZE, (y) * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
 static void render_tile(game_t* game, tile_t* tile, unsigned x, unsigned y) {
-	if (tile->type == TILE_EMPTY) {
-		RENDER_IMAGE(img_bg)
+	RENDER_IMAGE(img_bg, x, y)
+
+	if (tile->type == TILE_APPLE) {
+		RENDER_IMAGE(img_apple, x, y)
 	}
 
-	else if (tile->type == TILE_APPLE) {
-		RENDER_IMAGE(img_apple)
+	else if (tile->type == TILE_HEAD) {
+		RENDER_IMAGE(img_head_up, x, y)
+	}
+
+	else if (tile->type == TILE_BODY) {
+		RENDER_IMAGE(img_body, x, y)
 	}
 }
 
@@ -103,6 +122,29 @@ static void place_apple(game_t* game) {
 
 	tile_t* tile = ref_tile(game, x, y);
 	tile->type = TILE_APPLE;
+}
+
+static void update(game_t* game) {
+	ref_tile(game, game->head_x, game->head_y)->type = TILE_BODY;
+
+	switch (game->direction) {
+		case UP:    game->head_y--; break;
+		case DOWN:  game->head_y++; break;
+		case LEFT:  game->head_x--; break;
+		case RIGHT: game->head_x++; break;
+	}
+
+	ref_tile(game, game->head_x, game->head_y)->type = TILE_HEAD;
+
+	// tail (only if we haven't eaten an apple)
+
+	if (/* ate apple */ 0) {
+		return;
+	}
+
+	ref_tile(game, game->tail_x, game->tail_y)->type = TILE_TAIL;
+
+
 }
 
 int main(void) {
@@ -135,16 +177,32 @@ int main(void) {
 
 	game->map = calloc(game->tiles_x * game->tiles_y, sizeof *game->map);
 
+	game->direction = RIGHT;
+
+	game->head_x = game->tiles_x / 2;
+	game->head_y = game->tiles_y / 2;
+
+	ref_tile(game, game->head_x, game->head_y)->type = TILE_HEAD;
+
 	place_apple(game);
 
 	// main loop
 
 	game->running = 1;
+	float seconds = 0.0;
 
 	while (game->running) {
 		int flip_res = vga_flip();
 
 		if (flip_res == 1) { // draw next frame
+			float delta = 1.0 / mode->fps;
+			seconds += delta;
+
+			if (seconds > 0.3) {
+				seconds = 0;
+				update(game);
+			}
+			
 			render_world(game);
 		}
 
