@@ -239,6 +239,8 @@ int main(void) {
 	// main loop
 
 	game->running = 1;
+
+	unsigned pressed = 0;
 	float seconds = 0.0;
 
 	while (game->running) {
@@ -249,15 +251,31 @@ int main(void) {
 			seconds += delta;
 
 			kbd_update(kbd);
-			direction_t prev_dir = game->direction;
+			unsigned keypress = 1;
 
 			if      (kbd_poll_button(kbd, KBD_BUTTON_UP   )) game->direction = UP;
 			else if (kbd_poll_button(kbd, KBD_BUTTON_DOWN )) game->direction = DOWN;
 			else if (kbd_poll_button(kbd, KBD_BUTTON_LEFT )) game->direction = LEFT;
 			else if (kbd_poll_button(kbd, KBD_BUTTON_RIGHT)) game->direction = RIGHT;
 
-			if (game->direction % 2 == prev_dir % 2) {
-				game->direction = prev_dir;
+			else {
+				keypress = 0;
+			}
+
+			if (game->direction % 2 == game->snake->direction % 2) {
+				game->direction = game->snake->direction;
+			}
+
+			if (keypress) {
+				if (!pressed) {
+					seconds = 0;
+					update(game);
+				}
+
+				pressed = 1;
+
+			} else {
+				pressed = 0;
 			}
 
 			if (seconds > 0.1) {
