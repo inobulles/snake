@@ -172,12 +172,26 @@ static void update(game_t* game) {
 	}
 
 	// get tail and delete it
+	// and while we're at it, check if any body part is intersecting the head
 
 	snake_bit_t* bit = head;
-	while (bit->next->next) bit = bit->next;
+	int intersection = 0;
+	
+	while (bit->next->next) {
+		bit = bit->next;
+
+		if (bit->x == head->x && bit->y == head->y) {
+			intersection = 1;
+		}
+	}
 
 	free(bit->next);
 	bit->next = NULL;
+
+	if (intersection) {
+		// make the player lose the game
+		printf("intersection\n");
+	}
 }
 
 int main(void) {
