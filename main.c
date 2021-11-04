@@ -7,7 +7,7 @@
 
 #include "img/bg.h"
 #include "img/apple.h"
-#include "img/head_up.h"
+#include "img/head.h"
 #include "img/body.h"
 
 // macros and typedefs
@@ -113,7 +113,7 @@ static void render_snake(game_t* game) {
 
 	// render head
 
-	RENDER_IMAGE(img_head_up, bit->x, bit->y, bit->direction)
+	RENDER_IMAGE(img_head, bit->x, bit->y, bit->direction)
 
 	// render rest of body & tail
 
@@ -249,11 +249,16 @@ int main(void) {
 			seconds += delta;
 
 			kbd_update(kbd);
+			direction_t prev_dir = game->direction;
 
 			if      (kbd_poll_button(kbd, KBD_BUTTON_UP   )) game->direction = UP;
 			else if (kbd_poll_button(kbd, KBD_BUTTON_DOWN )) game->direction = DOWN;
 			else if (kbd_poll_button(kbd, KBD_BUTTON_LEFT )) game->direction = LEFT;
 			else if (kbd_poll_button(kbd, KBD_BUTTON_RIGHT)) game->direction = RIGHT;
+
+			if (game->direction % 2 == prev_dir % 2) {
+				game->direction = prev_dir;
+			}
 
 			if (seconds > 0.1) {
 				seconds = 0;
