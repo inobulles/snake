@@ -11,6 +11,7 @@
 #include "img/body.h"
 #include "img/curve.h"
 #include "img/tail.h"
+#include "img/fat.h"
 
 // macros and typedefs
 
@@ -131,14 +132,20 @@ static void render_snake(game_t* game) {
 		else if (prev->direction != bit->direction) {
 			int delta = prev->direction - bit->direction;
 			RENDER_BIT(img_curve, (bit->direction - (delta == 1 || delta == -3)) % 4)
+
+			if (bit->fat) { // make the last "fattable" part of the snake fat
+				bit->next->fat = 1;
+			}
+		}
+
+		else if (bit->fat) {
+			RENDER_BIT(img_fat, bit->direction)
 		}
 
 		else {
 			RENDER_BIT(img_body, bit->direction)
 		}
 		
-		// TODO also 'bit->fat'
-
 		prev = bit;
 	}
 }
