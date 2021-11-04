@@ -90,9 +90,9 @@ static void render_image(game_t* game, unsigned img_width, unsigned img_height, 
 			if (img_column[line / px_y * 4 + 3]) { // is opaque?
 				switch (direction) {
 					case UP:    PLOT(line + x, column + y, r, g, b) break;
-					case DOWN:  PLOT(width - line + x, height - column + y, r, g, b) break;
-					case LEFT:  PLOT(column + x, height - line + y, r, g, b) break;
-					case RIGHT: PLOT(width - column + x, line + y, r, g, b) break;
+					case DOWN:  PLOT(width - line + x - 1, height - column + y - 1, r, g, b) break;
+					case LEFT:  PLOT(column + x, height - line + y - 1, r, g, b) break;
+					case RIGHT: PLOT(width - column + x - 1, line + y, r, g, b) break;
 				}
 			}
 		}
