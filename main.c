@@ -15,13 +15,6 @@
 typedef enum {
 	TILE_EMPTY,
 	TILE_APPLE,
-
-	// bits of snake
-
-	TILE_HEAD,
-	TILE_BODY,
-	TILE_FAT,
-	TIEL_TAIL,
 } tile_type_t;
 
 typedef struct {
@@ -35,6 +28,16 @@ typedef enum {
 	LEFT,
 } direction_t;
 
+typedef struct snake_bit_t snake_bit_t; // forward declaration
+
+struct snake_bit_t {
+	snake_bit_t* next; // if tail, this will be 'NULL'
+	unsigned fat; // basically, was there an apple on this tile?
+
+	unsigned x, y;
+	direction_t direction;
+};
+
 typedef struct {
 	unsigned running;
 
@@ -42,8 +45,7 @@ typedef struct {
 	tile_t* map;
 
 	direction_t direction;
-	unsigned head_x, head_y;
-	unsigned tail_x, tail_y;
+	snake_bit_t* snake;
 
 	unsigned width, height;
 	uint8_t* framebuffer;
@@ -97,13 +99,20 @@ static void render_tile(game_t* game, tile_t* tile, unsigned x, unsigned y) {
 	if (tile->type == TILE_APPLE) {
 		RENDER_IMAGE(img_apple, x, y)
 	}
+}
 
-	else if (tile->type == TILE_HEAD) {
-		RENDER_IMAGE(img_head_up, x, y)
-	}
+static void render_snake(game_t* game) {
+	snake_bit_t* bit = game->snake;
 
-	else if (tile->type == TILE_BODY) {
-		RENDER_IMAGE(img_body, x, y)
+	// render head
+
+	RENDER_IMAGE(img_head_up, bit->x, bit->y)
+
+	// render rest of body & tail
+
+	while ((bit = bit->next)) {
+		RENDER_IMAGE(img_body, bit->x, bit->y)
+		// TODO tail too
 	}
 }
 
@@ -114,6 +123,8 @@ static void render_world(game_t* game) {
 			render_tile(game, tile, x, y);
 		}
 	}
+
+	render_snake(game);
 }
 
 static void place_apple(game_t* game) {
@@ -125,26 +136,35 @@ static void place_apple(game_t* game) {
 }
 
 static void update(game_t* game) {
-	ref_tile(game, game->head_x, game->head_y)->type = TILE_BODY;
+	snake_bit_t* prev_head = game->snake;
 
-	switch (game->direction) {
-		case UP:    game->head_y--; break;
-		case DOWN:  game->head_y++; break;
-		case LEFT:  game->head_x--; break;
-		case RIGHT: game->head_x++; break;
+	snake_bit_t* head = calloc(1, sizeof *head);
+	head->next = prev_head;
+
+	head->x = prev_head->x;
+	head->y = prev_head->y;
+
+	switch ((head->direction = game->direction)) {
+		case UP:    head->y--; break;
+		case DOWN:  head->y++; break;
+		case LEFT:  head->x--; break;
+		case RIGHT: head->x++; break; 
 	}
 
-	ref_tile(game, game->head_x, game->head_y)->type = TILE_HEAD;
+	game->snake = head;
 
-	// tail (only if we haven't eaten an apple)
-
-	if (/* ate apple */ 0) {
+	if (head->y & 1) { // is the head on an apple?
+		head->fat = 1;
 		return;
 	}
 
-	ref_tile(game, game->tail_x, game->tail_y)->type = TILE_TAIL;
+	// get tail and delete it
 
+	snake_bit_t* bit = head;
+	while (bit->next->next) bit = bit->next;
 
+	free(bit->next);
+	bit->next = NULL;
 }
 
 int main(void) {
@@ -177,12 +197,13 @@ int main(void) {
 
 	game->map = calloc(game->tiles_x * game->tiles_y, sizeof *game->map);
 
-	game->direction = RIGHT;
+	game->direction = UP;
 
-	game->head_x = game->tiles_x / 2;
-	game->head_y = game->tiles_y / 2;
+	game->snake = calloc(1, sizeof *game->snake);
+	game->snake->direction = game->direction;
 
-	ref_tile(game, game->head_x, game->head_y)->type = TILE_HEAD;
+	game->snake->x = game->tiles_x / 2;
+	game->snake->y = game->tiles_y / 2;
 
 	place_apple(game);
 
