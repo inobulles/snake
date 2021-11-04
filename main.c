@@ -10,6 +10,7 @@
 #include "img/head.h"
 #include "img/body.h"
 #include "img/curve.h"
+#include "img/tail.h"
 
 // macros and typedefs
 
@@ -124,7 +125,7 @@ static void render_snake(game_t* game) {
 
 	while ((bit = bit->next)) {
 		if (!bit->next) {
-			RENDER_BIT(img_body, prev->direction) // render tail
+			RENDER_BIT(img_tail, prev->direction) // render tail
 		}
 
 		else if (prev->direction != bit->direction) {
@@ -136,7 +137,6 @@ static void render_snake(game_t* game) {
 			RENDER_BIT(img_body, bit->direction)
 		}
 		
-		// TODO tail too (by checking 'bit->next == NULL')
 		// TODO also 'bit->fat'
 
 		prev = bit;
