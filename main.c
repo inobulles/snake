@@ -161,8 +161,12 @@ static void update(game_t* game) {
 	}
 
 	game->snake = head;
+	tile_t* tile = ref_tile(game, head->x, head->y); // what tile are we on?
 
-	if (head->y & 1) { // is the head on an apple?
+	if (tile->type == TILE_APPLE) {
+		tile->type = TILE_EMPTY;
+		place_apple(game);
+
 		head->fat = 1;
 		return;
 	}
@@ -237,7 +241,7 @@ int main(void) {
 			else if (kbd_poll_button(kbd, KBD_BUTTON_LEFT )) game->direction = LEFT;
 			else if (kbd_poll_button(kbd, KBD_BUTTON_RIGHT)) game->direction = RIGHT;
 
-			if (seconds > 0.3) {
+			if (seconds > 0.1) {
 				seconds = 0;
 				update(game);
 			}
