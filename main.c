@@ -322,6 +322,15 @@ int main(void) {
 	
 	vga_reset();
 
+	snake_bit_t* bit = game->snake;
+
+	while (bit) {
+		snake_bit_t* next = bit->next;
+
+		free(bit);
+		bit = next;
+	}
+
 	free(game->map);
 	free(game);
 
