@@ -9,6 +9,7 @@
 #include "img/apple.h"
 #include "img/head.h"
 #include "img/body.h"
+#include "img/curve.h"
 
 // macros and typedefs
 
@@ -89,8 +90,8 @@ static void render_image(game_t* game, unsigned img_width, unsigned img_height, 
 			if (img_column[line / px_y * 4 + 3]) { // is opaque?
 				switch (direction) {
 					case UP:    PLOT(line + x, column + y, r, g, b) break;
-					case DOWN:  PLOT(line + x, height - column + y, r, g, b) break;
-					case LEFT:  PLOT(column + x, line + y, r, g, b) break;
+					case DOWN:  PLOT(width - line + x, height - column + y, r, g, b) break;
+					case LEFT:  PLOT(column + x, height - line + y, r, g, b) break;
 					case RIGHT: PLOT(width - column + x, line + y, r, g, b) break;
 				}
 			}
@@ -108,20 +109,37 @@ static void render_tile(game_t* game, tile_t* tile, unsigned x, unsigned y) {
 	}
 }
 
+#define RENDER_BIT(img, direction) RENDER_IMAGE((img), bit->x, bit->y, (direction))
+
 static void render_snake(game_t* game) {
 	snake_bit_t* bit = game->snake;
 
 	// render head
 
-	RENDER_IMAGE(img_head, bit->x, bit->y, bit->direction)
+	RENDER_BIT(img_head, bit->direction)
 
 	// render rest of body & tail
 
+	snake_bit_t* prev = bit;
+
 	while ((bit = bit->next)) {
-		RENDER_IMAGE(img_body, bit->x, bit->y, bit->direction)
+		if (!bit->next) {
+			RENDER_BIT(img_body, prev->direction) // render tail
+		}
+
+		else if (prev->direction != bit->direction) {
+			int delta = prev->direction - bit->direction;
+			RENDER_BIT(img_curve, (bit->direction - (delta == 1 || delta == -3)) % 4)
+		}
+
+		else {
+			RENDER_BIT(img_body, bit->direction)
+		}
+		
 		// TODO tail too (by checking 'bit->next == NULL')
 		// TODO also 'bit->fat'
-		// TODO also also corners
+
+		prev = bit;
 	}
 }
 
@@ -234,7 +252,9 @@ int main(void) {
 	game->snake->x = game->tiles_x / 2;
 	game->snake->y = game->tiles_y / 2;
 
-	place_apple(game);
+	for (int i = 0; i < 30; i++) {
+		place_apple(game);
+	}
 
 	// main loop
 
