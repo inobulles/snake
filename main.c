@@ -1,5 +1,7 @@
 #include <stdio.h>
+
 #include <aquabsd/alps/vga.h>
+#include <aquabsd/alps/kbd.h>
 
 // images
 
@@ -72,7 +74,7 @@ static inline tile_t* ref_tile(game_t* game, unsigned x, unsigned y) {
 	game->framebuffer[4 * ((y) * game->width + (x)) + 1] = (g); \
 	game->framebuffer[4 * ((y) * game->width + (x)) + 2] = (b);
 
-static void render_image(game_t* game, unsigned img_width, unsigned img_height, const uint8_t* img_data, unsigned x, unsigned y, unsigned width, unsigned height) {
+static void render_image(game_t* game, unsigned img_width, unsigned img_height, const uint8_t* img_data, unsigned x, unsigned y, unsigned width, unsigned height, direction_t direction) {
 	const unsigned px_x = width  / img_width;
 	const unsigned px_y = height / img_height;
 
@@ -85,19 +87,24 @@ static void render_image(game_t* game, unsigned img_width, unsigned img_height, 
 			uint8_t r = img_column[line / px_y * 4 + 2];
 			
 			if (img_column[line / px_y * 4 + 3]) { // is opaque?
-				PLOT(line + x, column + y, r, g, b)
+				switch (direction) {
+					case UP:    PLOT(line + x, column + y, r, g, b) break;
+					case DOWN:  PLOT(line + x, height - column + y, r, g, b) break;
+					case LEFT:  PLOT(column + x, line + y, r, g, b) break;
+					case RIGHT: PLOT(width - column + x, line + y, r, g, b) break;
+				}
 			}
 		}
 	}
 }
 
-#define RENDER_IMAGE(img, x, y) render_image(game, (img).width, (img).height, (img).pixel_data, (x) * TILE_SIZE, (y) * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+#define RENDER_IMAGE(img, x, y, direction) render_image(game, (img).width, (img).height, (img).pixel_data, (x) * TILE_SIZE, (y) * TILE_SIZE, TILE_SIZE, TILE_SIZE, direction);
 
 static void render_tile(game_t* game, tile_t* tile, unsigned x, unsigned y) {
-	RENDER_IMAGE(img_bg, x, y)
+	RENDER_IMAGE(img_bg, x, y, UP)
 
 	if (tile->type == TILE_APPLE) {
-		RENDER_IMAGE(img_apple, x, y)
+		RENDER_IMAGE(img_apple, x, y, UP)
 	}
 }
 
@@ -106,13 +113,15 @@ static void render_snake(game_t* game) {
 
 	// render head
 
-	RENDER_IMAGE(img_head_up, bit->x, bit->y)
+	RENDER_IMAGE(img_head_up, bit->x, bit->y, bit->direction)
 
 	// render rest of body & tail
 
 	while ((bit = bit->next)) {
-		RENDER_IMAGE(img_body, bit->x, bit->y)
-		// TODO tail too
+		RENDER_IMAGE(img_body, bit->x, bit->y, bit->direction)
+		// TODO tail too (by checking 'bit->next == NULL')
+		// TODO also 'bit->fat'
+		// TODO also also corners
 	}
 }
 
@@ -192,6 +201,8 @@ int main(void) {
 
 	curr_rand = (uint64_t) game; // set the seed to something approximatively unpredictable
 
+	kbd_t kbd = kbd_get_default();
+
 	game->tiles_x = mode->width  / TILE_SIZE;
 	game->tiles_y = mode->height / TILE_SIZE;
 
@@ -218,6 +229,13 @@ int main(void) {
 		if (flip_res == 1) { // draw next frame
 			float delta = 1.0 / mode->fps;
 			seconds += delta;
+
+			kbd_update(kbd);
+
+			if      (kbd_poll_button(kbd, KBD_BUTTON_UP   )) game->direction = UP;
+			else if (kbd_poll_button(kbd, KBD_BUTTON_DOWN )) game->direction = DOWN;
+			else if (kbd_poll_button(kbd, KBD_BUTTON_LEFT )) game->direction = LEFT;
+			else if (kbd_poll_button(kbd, KBD_BUTTON_RIGHT)) game->direction = RIGHT;
 
 			if (seconds > 0.3) {
 				seconds = 0;
