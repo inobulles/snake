@@ -336,5 +336,5 @@ int play_game(game_t* game) {
 	}
 
 	free(game->map);
-	return game->score;
+	return 0;
 }

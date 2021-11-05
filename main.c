@@ -31,10 +31,8 @@ int main(void) {
 
 	game->fps = mode->fps;
 
-	int score = play_game(game);
-
-	if (score >= 0) {
-		printf("Score: %d\n", score);
+	if (play_game(game) == 0) {
+		printf("Score: %d\n", game->score);
 	}
 
 	vga_reset();
