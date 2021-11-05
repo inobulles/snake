@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #include <aquabsd/alps/vga.h>
-// #include <aquabsd/alps/kbd.h>
+#include <aquabsd/alps/kbd.h>
 
 // images
 
@@ -274,7 +274,7 @@ int main(void) {
 
 	curr_rand = (uint64_t) game; // set the seed to something approximatively unpredictable
 
-	// kbd_t kbd = kbd_get_default();
+	kbd_t kbd = kbd_get_default();
 
 	game->tiles_x = mode->width  / TILE_SIZE;
 	game->tiles_y = mode->height / TILE_SIZE;
@@ -307,33 +307,37 @@ int main(void) {
 			float delta = 1.0 / mode->fps;
 			seconds += delta;
 
-			// kbd_update(kbd);
-			// unsigned keypress = 1;
+			kbd_update(kbd);
+			unsigned keypress = 1;
 
-			// if      (kbd_poll_button(kbd, KBD_BUTTON_UP   )) game->direction = UP;
-			// else if (kbd_poll_button(kbd, KBD_BUTTON_DOWN )) game->direction = DOWN;
-			// else if (kbd_poll_button(kbd, KBD_BUTTON_LEFT )) game->direction = LEFT;
-			// else if (kbd_poll_button(kbd, KBD_BUTTON_RIGHT)) game->direction = RIGHT;
+			if (kbd_poll_button(kbd, KBD_BUTTON_ESC)) {
+				game->running = 0;
+			}
 
-			// else {
-			// 	keypress = 0;
-			// }
+			else if (kbd_poll_button(kbd, KBD_BUTTON_UP   )) game->direction = UP;
+			else if (kbd_poll_button(kbd, KBD_BUTTON_DOWN )) game->direction = DOWN;
+			else if (kbd_poll_button(kbd, KBD_BUTTON_LEFT )) game->direction = LEFT;
+			else if (kbd_poll_button(kbd, KBD_BUTTON_RIGHT)) game->direction = RIGHT;
 
-			// if (game->direction % 2 == game->snake->direction % 2) {
-			// 	game->direction = game->snake->direction;
-			// }
+			else {
+				keypress = 0;
+			}
 
-			// if (keypress) {
-			// 	if (!pressed) {
-			// 		seconds = 0;
-			// 		update(game);
-			// 	}
+			if (game->direction % 2 == game->snake->direction % 2) {
+				game->direction = game->snake->direction;
+			}
 
-			// 	pressed = 1;
+			if (keypress) {
+				if (!pressed) {
+					seconds = 0;
+					update(game);
+				}
 
-			// } else {
-			// 	pressed = 0;
-			// }
+				pressed = 1;
+
+			} else {
+				pressed = 0;
+			}
 
 			if (seconds > 0.1) {
 				seconds = 0;
