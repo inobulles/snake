@@ -234,7 +234,7 @@ static void update(game_t* game) {
 
 	// process intersection
 
-	printf("intersection!\n");
+	game->running = 0;
 }
 
 int main(void) {
