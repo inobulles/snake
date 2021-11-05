@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #include <aquabsd/alps/vga.h>
-#include <aquabsd/alps/kbd.h>
+// #include <aquabsd/alps/kbd.h>
 
 // images
 
@@ -231,8 +231,20 @@ int main(void) {
 
 	vga_mode_t* mode = &modes[0];
 
-	mode->width = 800;//1024;
-	mode->height = 576;//768;
+	// mode->width = 800;//1024;
+	// mode->height = 576;//768;
+
+	// look for a mode which is 800x600x32
+
+	for (int i = 0; i < mode_count; i++) {
+		mode = &modes[i];
+
+		// for some reason, 800x600x32 doesn't work on FreeBSD
+
+		if (mode->width == 1024 && mode->height == 768 && mode->bpp == 32) {
+			break;
+		}
+	}
 
 	vga_set_mode(mode);
 	game->framebuffer = vga_get_framebuffer();
@@ -244,7 +256,7 @@ int main(void) {
 
 	curr_rand = (uint64_t) game; // set the seed to something approximatively unpredictable
 
-	kbd_t kbd = kbd_get_default();
+	// kbd_t kbd = kbd_get_default();
 
 	game->tiles_x = mode->width  / TILE_SIZE;
 	game->tiles_y = mode->height / TILE_SIZE;
@@ -277,39 +289,39 @@ int main(void) {
 			float delta = 1.0 / mode->fps;
 			seconds += delta;
 
-			kbd_update(kbd);
-			unsigned keypress = 1;
+			// kbd_update(kbd);
+			// unsigned keypress = 1;
 
-			if      (kbd_poll_button(kbd, KBD_BUTTON_UP   )) game->direction = UP;
-			else if (kbd_poll_button(kbd, KBD_BUTTON_DOWN )) game->direction = DOWN;
-			else if (kbd_poll_button(kbd, KBD_BUTTON_LEFT )) game->direction = LEFT;
-			else if (kbd_poll_button(kbd, KBD_BUTTON_RIGHT)) game->direction = RIGHT;
+			// if      (kbd_poll_button(kbd, KBD_BUTTON_UP   )) game->direction = UP;
+			// else if (kbd_poll_button(kbd, KBD_BUTTON_DOWN )) game->direction = DOWN;
+			// else if (kbd_poll_button(kbd, KBD_BUTTON_LEFT )) game->direction = LEFT;
+			// else if (kbd_poll_button(kbd, KBD_BUTTON_RIGHT)) game->direction = RIGHT;
 
-			else {
-				keypress = 0;
-			}
+			// else {
+			// 	keypress = 0;
+			// }
 
-			if (game->direction % 2 == game->snake->direction % 2) {
-				game->direction = game->snake->direction;
-			}
+			// if (game->direction % 2 == game->snake->direction % 2) {
+			// 	game->direction = game->snake->direction;
+			// }
 
-			if (keypress) {
-				if (!pressed) {
-					seconds = 0;
-					update(game);
-				}
+			// if (keypress) {
+			// 	if (!pressed) {
+			// 		seconds = 0;
+			// 		update(game);
+			// 	}
 
-				pressed = 1;
+			// 	pressed = 1;
 
-			} else {
-				pressed = 0;
-			}
+			// } else {
+			// 	pressed = 0;
+			// }
 
 			if (seconds > 0.1) {
 				seconds = 0;
 				update(game);
 			}
-			
+
 			render_world(game);
 		}
 
