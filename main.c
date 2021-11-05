@@ -185,7 +185,35 @@ static void update(game_t* game) {
 		case RIGHT: head->x++; break; 
 	}
 
+	int intersection = 0;
+
+	if (head->x < 0 || head->x >= game->tiles_x) intersection = 1;
+	if (head->y < 0 || head->y >= game->tiles_y) intersection = 1;
+
+	if (intersection) {
+		head->x = prev_head->x;
+		head->y = prev_head->y;
+
+		// TODO make this a bit more gory
+	}
+
 	game->snake = head;
+
+	// check if any body part is intersecting the head
+	// and while we're at it, try and get the new last bit of snake so we can delete any bit that follows
+
+	snake_bit_t* last = head;
+	
+	while (last->next->next) {
+		last = last->next;
+
+		if (last->x == head->x && last->y == head->y) {
+			intersection = 1;
+		}
+	}
+
+	// what tile are we on?
+
 	tile_t* tile = ref_tile(game, head->x, head->y); // what tile are we on?
 
 	if (tile->type == TILE_APPLE) {
@@ -193,30 +221,20 @@ static void update(game_t* game) {
 		place_apple(game);
 
 		head->fat = 1;
+	}
+
+	else {
+		free(last->next);
+		last->next = NULL;
+	}
+
+	if (!intersection) {
 		return;
 	}
 
-	// get tail and delete it
-	// and while we're at it, check if any body part is intersecting the head
+	// process intersection
 
-	snake_bit_t* bit = head;
-	int intersection = 0;
-	
-	while (bit->next->next) {
-		bit = bit->next;
-
-		if (bit->x == head->x && bit->y == head->y) {
-			intersection = 1;
-		}
-	}
-
-	free(bit->next);
-	bit->next = NULL;
-
-	if (intersection) {
-		// make the player lose the game
-		printf("intersection\n");
-	}
+	printf("intersection!\n");
 }
 
 int main(void) {
