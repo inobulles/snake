@@ -1,0 +1,13 @@
+{
+	"unique": "inobulles.games.snake",
+
+	"name": "Snake",
+	"version": "1021a",
+	"description": "Simple snake game made for Halloween of 2021",
+	
+	"author": "obiwac",
+	"organization": "inobulles",
+
+	"start": "native",
+	"entry": "entry.native"
+}
