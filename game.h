@@ -286,7 +286,7 @@ int game_draw(game_t* game, double dt) {
 	}
 
 	render_world(game);
-	return 0;
+	return !game->running;
 }
 
 int game_init(game_t* game) {
@@ -317,8 +317,13 @@ int game_init(game_t* game) {
 }
 
 void game_free(game_t* game) {
-	for (snake_bit_t* bit = game->snake; bit; bit = bit->next) {
+	snake_bit_t* bit = game->snake;
+
+	while (bit) {
+		snake_bit_t* next = bit->next;
+
 		free(bit);
+		bit = next;
 	}
 
 	free(game->map);
