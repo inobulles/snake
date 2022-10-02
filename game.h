@@ -31,6 +31,7 @@ typedef enum {
 	RIGHT,
 	DOWN,
 	LEFT,
+	NONE,
 } direction_t;
 
 typedef struct snake_bit_t snake_bit_t; // forward declaration
@@ -251,6 +252,8 @@ int game_draw(game_t* game, double dt) {
 	kbd_update(game->kbd);
 	unsigned keypress = 1;
 
+	direction_t prev_dir = game->direction;
+
 	if (kbd_poll_key(game->kbd, "escape")) {
 		game->running = 0;
 	}
@@ -264,7 +267,11 @@ int game_draw(game_t* game, double dt) {
 		keypress = 0;
 	}
 
-	if (game->direction % 2 == game->snake->direction % 2) {
+	if (prev_dir == NONE) {
+		game->snake->direction = game->direction;
+	}
+
+	else if (game->direction % 2 == game->snake->direction % 2) {
 		game->direction = game->snake->direction;
 	}
 
@@ -299,7 +306,7 @@ int game_init(game_t* game) {
 
 	game->map = calloc(game->tiles_x * game->tiles_y, sizeof *game->map);
 
-	game->direction = UP;
+	game->direction = NONE;
 
 	game->snake = calloc(1, sizeof *game->snake);
 	game->snake->direction = game->direction;
