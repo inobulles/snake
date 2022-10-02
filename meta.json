@@ -1,0 +1,13 @@
+{
+	"unique": "aquabsd.installer.snake",
+
+	"name": "Snake game",
+	"version": "1.0",
+	"description": "Simple snake game for use in the aquaBSD installer program",
+
+	"author": "obiwac",
+	"organization": "Inobulles",
+
+	"start": "native",
+	"entry": "entry.native"
+}

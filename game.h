@@ -282,14 +282,14 @@ int play_game(game_t* game) {
 			kbd_update(kbd);
 			unsigned keypress = 1;
 
-			if (kbd_poll_button(kbd, KBD_BUTTON_ESC)) {
+			if (kbd_poll_key(kbd, "escape")) {
 				game->running = 0;
 			}
 
-			else if (kbd_poll_button(kbd, KBD_BUTTON_UP   )) game->direction = UP;
-			else if (kbd_poll_button(kbd, KBD_BUTTON_DOWN )) game->direction = DOWN;
-			else if (kbd_poll_button(kbd, KBD_BUTTON_LEFT )) game->direction = LEFT;
-			else if (kbd_poll_button(kbd, KBD_BUTTON_RIGHT)) game->direction = RIGHT;
+			else if (kbd_poll_key(kbd, "up"   )) game->direction = UP;
+			else if (kbd_poll_key(kbd, "down" )) game->direction = DOWN;
+			else if (kbd_poll_key(kbd, "left" )) game->direction = LEFT;
+			else if (kbd_poll_key(kbd, "right")) game->direction = RIGHT;
 
 			else {
 				keypress = 0;
