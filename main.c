@@ -1,41 +1,34 @@
 #include "game.h"
 
+static int draw(uint64_t _, uint64_t _game, uint64_t _dt) {
+	game_t* game = (void*) _game;
+	double dt = *(double*) &_dt;
+
+	return game_draw(game, dt);
+}
+
 int main(void) {
 	game_t* game = calloc(1, sizeof *game);
 
-	// setup vga
+	// setup window
 
-	vga_init();
+	game->width  = 800;
+	game->height = 600;
 
-	int mode_count = vga_get_mode_count();
-	vga_mode_t* modes = vga_get_modes();
+	game->win = win_create(game->width, game->height);
+	win_set_caption(game->win, "Snake");
 
-	vga_mode_t* mode = &modes[0];
+	game->framebuffer = win_get_fb(game->win, 32);
 
-	// mode->width = 800;//1024;
-	// mode->height = 576;//768;
+	game_init(game);
 
-	for (int i = 0; i < mode_count; i++) {
-		mode = &modes[i];
+	win_register_cb(game->win, WIN_CB_DRAW, draw, game);
+	win_loop(game->win);
 
-		if (mode->width == 1024 && mode->height == 768 && mode->bpp == 32) {
-			break;
-		}
-	}
+	printf("Score: %d\n", game->score);
 
-	vga_set_mode(mode);
-	game->framebuffer = vga_get_framebuffer();
-
-	game->width = mode->width;
-	game->height = mode->height;
-
-	game->fps = mode->fps;
-
-	if (play_game(game) == 0) {
-		printf("Score: %d\n", game->score);
-	}
-
-	vga_reset();
+	win_delete(game->win);
+	game_free(game);
 	free(game);
 
 	return 0;

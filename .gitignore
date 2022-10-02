@@ -3,3 +3,4 @@
 *.zpk
 *.bin
 .package
+*.core

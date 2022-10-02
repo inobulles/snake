@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include <aquabsd/alps/vga.h>
+#include <aquabsd/alps/win.h>
 #include <aquabsd/alps/kbd.h>
 
 // images
@@ -53,10 +53,14 @@ typedef struct {
 	direction_t direction;
 	snake_bit_t* snake;
 
-	unsigned fps;
+	win_t* win;
+	kbd_t kbd;
 
 	unsigned width, height;
 	uint8_t* framebuffer;
+
+	unsigned pressed;
+	float seconds;
 } game_t;
 
 static int curr_rand = 1234567890;
@@ -91,7 +95,7 @@ static void render_image(game_t* game, unsigned img_width, unsigned img_height, 
 			uint8_t b = img_column[line / px_y * 4 + 0];
 			uint8_t g = img_column[line / px_y * 4 + 1];
 			uint8_t r = img_column[line / px_y * 4 + 2];
-			
+
 			if (img_column[line / px_y * 4 + 3]) { // is opaque?
 				switch (direction) {
 					case UP:    PLOT(line + x, column + y, r, g, b) break;
@@ -148,7 +152,7 @@ static void render_snake(game_t* game) {
 		else {
 			RENDER_BIT(img_body, bit->direction)
 		}
-		
+
 		prev = bit;
 	}
 }
@@ -185,7 +189,7 @@ static void update(game_t* game) {
 		case UP:    head->y--; break;
 		case DOWN:  head->y++; break;
 		case LEFT:  head->x--; break;
-		case RIGHT: head->x++; break; 
+		case RIGHT: head->x++; break;
 	}
 
 	int intersection = 0;
@@ -206,7 +210,7 @@ static void update(game_t* game) {
 	// and while we're at it, try and get the new last bit of snake so we can delete any bit that follows
 
 	snake_bit_t* last = head;
-	
+
 	while (last->next->next) {
 		last = last->next;
 
@@ -241,12 +245,54 @@ static void update(game_t* game) {
 	game->running = 0;
 }
 
-int play_game(game_t* game) {
-	// setup
+int game_draw(game_t* game, double dt) {
+	game->seconds += dt;
 
+	kbd_update(game->kbd);
+	unsigned keypress = 1;
+
+	if (kbd_poll_key(game->kbd, "escape")) {
+		game->running = 0;
+	}
+
+	else if (kbd_poll_key(game->kbd, "up"   )) game->direction = UP;
+	else if (kbd_poll_key(game->kbd, "down" )) game->direction = DOWN;
+	else if (kbd_poll_key(game->kbd, "left" )) game->direction = LEFT;
+	else if (kbd_poll_key(game->kbd, "right")) game->direction = RIGHT;
+
+	else {
+		keypress = 0;
+	}
+
+	if (game->direction % 2 == game->snake->direction % 2) {
+		game->direction = game->snake->direction;
+	}
+
+	if (keypress) {
+		if (!game->pressed) {
+			game->seconds = 0;
+			update(game);
+		}
+
+		game->pressed = 1;
+
+	} else {
+		game->pressed = 0;
+	}
+
+	if (game->seconds > 0.1) {
+		game->seconds = 0;
+		update(game);
+	}
+
+	render_world(game);
+	return 0;
+}
+
+int game_init(game_t* game) {
 	curr_rand = (uint64_t) game; // set the seed to something approximatively unpredictable
 
-	kbd_t kbd = kbd_get_default();
+	game->kbd = kbd_get_default();
 
 	game->tiles_x = game->width  / TILE_SIZE;
 	game->tiles_y = game->height / TILE_SIZE;
@@ -265,76 +311,15 @@ int play_game(game_t* game) {
 		place_apple(game);
 	}
 
-	// main loop
-
 	game->running = 1;
 
-	unsigned pressed = 0;
-	float seconds = 0.0;
+	return 0;
+}
 
-	while (game->running) {
-		int flip_res = vga_flip();
-
-		if (flip_res == 1) { // draw next frame
-			float delta = 1.0 / game->fps;
-			seconds += delta;
-
-			kbd_update(kbd);
-			unsigned keypress = 1;
-
-			if (kbd_poll_key(kbd, "escape")) {
-				game->running = 0;
-			}
-
-			else if (kbd_poll_key(kbd, "up"   )) game->direction = UP;
-			else if (kbd_poll_key(kbd, "down" )) game->direction = DOWN;
-			else if (kbd_poll_key(kbd, "left" )) game->direction = LEFT;
-			else if (kbd_poll_key(kbd, "right")) game->direction = RIGHT;
-
-			else {
-				keypress = 0;
-			}
-
-			if (game->direction % 2 == game->snake->direction % 2) {
-				game->direction = game->snake->direction;
-			}
-
-			if (keypress) {
-				if (!pressed) {
-					seconds = 0;
-					update(game);
-				}
-
-				pressed = 1;
-
-			} else {
-				pressed = 0;
-			}
-
-			if (seconds > 0.1) {
-				seconds = 0;
-				update(game);
-			}
-
-			render_world(game);
-		}
-
-		else if (flip_res == -1) { // quit
-			game->running = 0;
-		}	
-	}
-
-	// cleanup
-	
-	snake_bit_t* bit = game->snake;
-
-	while (bit) {
-		snake_bit_t* next = bit->next;
-
+void game_free(game_t* game) {
+	for (snake_bit_t* bit = game->snake; bit; bit = bit->next) {
 		free(bit);
-		bit = next;
 	}
 
 	free(game->map);
-	return 0;
 }
