@@ -1,9 +1,9 @@
 {
-	"unique": "aquabsd.installer.snake",
+	"unique": "inobulles.games.snake",
 
-	"name": "Snake game",
+	"name": "Snake",
 	"version": "1.0",
-	"description": "Simple snake game for use in the aquaBSD installer program",
+	"description": "Simple snake game made for Halloween of 2021 for use in the aquaBSD installer program",
 
 	"author": "obiwac",
 	"organization": "Inobulles",

@@ -2,3 +2,4 @@
 .build/
 *.zpk
 *.bin
+.package
